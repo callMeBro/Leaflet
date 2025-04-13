@@ -3,55 +3,57 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Leaflet FitBounds Example</title>
+  <title>Multiple Leaflet Maps</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     html, body {
-      height: 100%;
       margin: 0;
+      padding: 0;
     }
-    #map {
-      height: 100vh;
+    .map-section {
+      height: 33vh;
       width: 100%;
+      margin-bottom: 10px;
     }
   </style>
 </head>
 <body>
-  <div id="map"></div>
+
+  <!-- Map Containers -->
+  <div id="map1" class="map-section"></div>
+  <div id="map2" class="map-section"></div>
+  <div id="map3" class="map-section"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    const map = L.map('map');
-
+    // === Map 1: OpenStreetMap ===
+    const map1 = L.map('map1').setView([25.0343, -77.3963], 14);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+    }).addTo(map1);
 
-    // Add circle
-    const circle = L.circle([25.0343, -77.3963], {
-      radius: 500,
+    // === Map 2: Esri World Imagery ===
+    const map2 = L.map('map2').setView([25.0343, -77.3963], 14);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri'
+    }).addTo(map2);
+
+    // === Map 3: Google Satellite (Unofficial!) ===
+    const map3 = L.map('map3').setView([25.0343, -77.3963], 14);
+    L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+      maxZoom: 20,
+      subdomains: ['mt0','mt1','mt2','mt3']
+    }).addTo(map3);
+
+    // Add a shape or marker to one (example)
+    L.circle([25.0343, -77.3963], {
+      radius: 300,
       color: 'red',
       fillColor: '#f03',
-      fillOpacity: 0.4
-    }).addTo(map);
-
-    // Add polygon
-    const polygonPoints = [
-      [25.0361, -77.3995],
-      [25.0380, -77.3900],
-      [25.0300, -77.3880]
-    ];
-
-    const polygon = L.polygon(polygonPoints, {
-      color: 'blue',
-      fillColor: 'blue',
       fillOpacity: 0.3
-    }).addTo(map);
-
-    // Combine all latLng points (not bounds!) to fit
-    const allPoints = [circle.getLatLng(), ...polygonPoints];
-    map.fitBounds(allPoints);
+    }).addTo(map2);
   </script>
+  <br><br><br><br>
 </body>
 </html>

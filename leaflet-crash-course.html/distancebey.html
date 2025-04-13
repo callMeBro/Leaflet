@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Distance Islands – Fitness Adventure</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #00796b;
+      --primary-light: #4db6ac;
+      --secondary: #ff8f00;
+      --dark: #004d40;
+      --light: #e0f7fa;
+      --white: #ffffff;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e0f7fa 100%);
+      color: #333;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    
+    header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--dark) 100%);
+      color: var(--white);
+      padding: 2rem 2rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path fill="rgba(255,255,255,0.05)" d="M0,0 L100,0 L100,100 Q50,80 0,100 Z"></path></svg>');
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      opacity: 0.3;
+    }
+    
+    header h1 {
+      margin: 0;
+      font-size: 3rem;
+      font-weight: 700;
+      position: relative;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    header p {
+      font-size: 1.2rem;
+      max-width: 800px;
+      margin: 1rem auto;
+      position: relative;
+      opacity: 0.9;
+    }
+    
+    .cta-button {
+      display: inline-block;
+      background: var(--secondary);
+      color: white;
+      padding: 0.8rem 2rem;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 600;
+      margin-top: 1rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .cta-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    }
+    
+    .cta-button::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(rgba(255,255,255,0.2), rgba(255,255,255,0));
+      transform: translateY(-100%);
+      transition: transform 0.3s ease;
+    }
+    
+    .cta-button:hover::after {
+      transform: translateY(0);
+    }
+    
+    .hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 4rem 2rem;
+      position: relative;
+    }
+    
+    .hero-image-container {
+      position: relative;
+      width: 100%;
+      max-width: 800px;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      transform-style: preserve-3d;
+      perspective: 1000px;
+    }
+    
+    .hero-image-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, rgba(0,121,107,0.3) 0%, rgba(77,182,172,0.1) 100%);
+      z-index: 1;
+    }
+    
+    .hero img {
+      width: 100%;
+      height: auto;
+      display: block;
+      transition: transform 0.5s ease;
+    }
+    
+    .hero-image-container:hover img {
+      transform: scale(1.05) rotate(0.5deg);
+    }
+    
+    .floating-islands {
+      position: absolute;
+      width: 100%;
+      height: 100px;
+      bottom: -50px;
+      left: 0;
+      z-index: 2;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path fill="%23e0f7fa" d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".25"></path><path fill="%23e0f7fa" d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" opacity=".5"></path><path fill="%23e0f7fa" d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z"></path></svg>');
+      background-size: cover;
+      background-repeat: no-repeat;
+    }
+    
+    .section {
+      padding: 5rem 2rem;
+      text-align: center;
+      position: relative;
+    }
+    
+    .section:nth-child(even) {
+      background-color: var(--white);
+    }
+    
+    .section-title {
+      font-size: 2.5rem;
+      color: var(--primary);
+      margin-bottom: 2rem;
+      position: relative;
+      display: inline-block;
+    }
+    
+    .section-title::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 4px;
+      background: var(--secondary);
+      border-radius: 2px;
+    }
+    
+    .section-subtitle {
+      font-size: 1.2rem;
+      color: #666;
+      max-width: 700px;
+      margin: 0 auto 3rem;
+    }
+    
+    .activity-cards {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+      margin-top: 2rem;
+    }
+    
+    .card {
+      background: var(--white);
+      padding: 2rem;
+      width: 280px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+    }
+    
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: var(--primary-light);
+      transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+    }
+    
+    .card:hover::before {
+      height: 10px;
+      background: var(--secondary);
+    }
+    
+    .card-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      display: inline-block;
+      transition: transform 0.3s ease;
+    }
+    
+    .card:hover .card-icon {
+      transform: scale(1.2);
+    }
+    
+    .card h3 {
+      color: var(--primary);
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .card p {
+      color: #666;
+      font-size: 1rem;
+    }
+    
+    .map-container {
+      width: 100%;
+      max-width: 900px;
+      height: 500px;
+      margin: 2rem auto;
+      border-radius: 16px;
+      overflow: hidden;
+      border: none;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    
+    .map-overlay {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      z-index: 1000;
+      max-width: 250px;
+    }
+    
+    .map-overlay h3 {
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+    }
+    
+    .progress-container {
+      width: 100%;
+      max-width: 800px;
+      margin: 3rem auto;
+      background: #f0f0f0;
+      border-radius: 10px;
+      height: 20px;
+      overflow: hidden;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary-light), var(--secondary));
+      width: 45%;
+      border-radius: 10px;
+      position: relative;
+      animation: progressAnimation 2s ease-in-out infinite;
+    }
+    
+    @keyframes progressAnimation {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      max-width: 800px;
+      margin: 2rem auto;
+      flex-wrap: wrap;
+    }
+    
+    .stat-item {
+      text-align: center;
+      padding: 1.5rem;
+      min-width: 150px;
+    }
+    
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+      color: #666;
+      font-size: 1rem;
+    }
+    
+    footer {
+      background: linear-gradient(135deg, var(--dark) 0%, var(--primary) 100%);
+      color: var(--white);
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+    
+    .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .footer-logo {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    
+    .footer-links {
+      display: flex;
+      gap: 2rem;
+      margin: 1.5rem 0;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .footer-link {
+      color: var(--white);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    
+    .footer-link:hover {
+      color: var(--secondary);
+    }
+    
+    .social-icons {
+      display: flex;
+      gap: 1.5rem;
+      margin: 1.5rem 0;
+    }
+    
+    .social-icon {
+      color: var(--white);
+      font-size: 1.5rem;
+      transition: transform 0.3s ease, color 0.3s ease;
+    }
+    
+    .social-icon:hover {
+      transform: translateY(-3px);
+      color: var(--secondary);
+    }
+    
+    .copyright {
+      margin-top: 1.5rem;
+      opacity: 0.8;
+      font-size: 0.9rem;
+    }
+    
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 2.2rem;
+      }
+      
+      header p {
+        font-size: 1rem;
+      }
+      
+      .section {
+        padding: 3rem 1.5rem;
+      }
+      
+      .section-title {
+        font-size: 2rem;
+      }
+      
+      .card {
+        width: 100%;
+        max-width: 350px;
+      }
+    }
+    
+    /* Animation classes */
+    .animate-delay-1 {
+      animation-delay: 0.2s;
+    }
+    
+    .animate-delay-2 {
+      animation-delay: 0.4s;
+    }
+    
+    .animate-delay-3 {
+      animation-delay: 0.6s;
+    }
+    
+    .animate-delay-4 {
+      animation-delay: 0.8s;
+    }
+    
+    /* Wave divider */
+    .wave-divider {
+      position: relative;
+      height: 100px;
+      overflow: hidden;
+    }
+    
+    .wave-divider svg {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* Floating animation */
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-15px); }
+      100% { transform: translateY(0px); }
+    }
+    
+    .floating {
+      animation: float 4s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body>
+  <header class="animate__animated animate__fadeIn">
+    <h1>Distance Bey</h1>
+    <p>Turn your fitness into a tropical adventure – walk, bike, swim, and lift to explore the Bahamas.</p>
+    <a href="#" class="cta-button animate__animated animate__pulse animate__infinite animate__slower">Start Your Journey</a>
+  </header>
+
+  <div class="wave-divider">
+    <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+      <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".25" fill="#00796b"></path>
+      <path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" opacity=".5" fill="#00796b"></path>
+      <path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z" fill="#00796b"></path>
+    </svg>
+  </div>
+
+  <section class="section">
+    <h2 class="section-title animate__animated animate__fadeIn">Your Fitness Adventure Awaits</h2>
+    <p class="section-subtitle animate__animated animate__fadeIn animate-delay-1">Convert your real-world workouts into virtual exploration of tropical islands</p>
+    
+    <div class="hero">
+      <div class="hero-image-container floating">
+        <img src="https://images.unsplash.com/photo-1505228395891-9a51e7e86bf6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Tropical island paradise" />
+      </div>
+    </div>
+    
+    <div class="stats">
+      <div class="stat-item animate__animated animate__fadeInUp animate-delay-1">
+        <div class="stat-number">15+</div>
+        <div class="stat-label">Islands to Explore</div>
+      </div>
+      <div class="stat-item animate__animated animate__fadeInUp animate-delay-2">
+        <div class="stat-number">500+</div>
+        <div class="stat-label">Active Explorers</div>
+      </div>
+      <div class="stat-item animate__animated animate__fadeInUp animate-delay-3">
+        <div class="stat-number">10K+</div>
+        <div class="stat-label">Miles Traveled</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wave-divider">
+    <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+      <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".25" fill="#fff"></path>
+      <path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" opacity=".5" fill="#fff"></path>
+      <path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z" fill="#fff"></path>
+    </svg>
+  </div>
+
+  <section class="section">
+    <h2 class="section-title animate__animated animate__fadeIn">Track Your Activities</h2>
+    <p class="section-subtitle animate__animated animate__fadeIn animate-delay-1">Every workout brings you closer to discovering new islands and hidden treasures</p>
+    
+    <div class="activity-cards">
+      <div class="card animate__animated animate__fadeInUp animate-delay-1">
+        <div class="card-icon">🏃</div>
+        <h3>Walk / Run</h3>
+        <p>Convert every step into distance traveled on the map. Explore beaches and trails as you progress.</p>
+      </div>
+      <div class="card animate__animated animate__fadeInUp animate-delay-2">
+        <div class="card-icon">🚴</div>
+        <h3>Bike Rides</h3>
+        <p>Ride through paradise and unlock new locations. Longer rides reveal more distant islands.</p>
+      </div>
+      <div class="card animate__animated animate__fadeInUp animate-delay-3">
+        <div class="card-icon">🏊</div>
+        <h3>Swim</h3>
+        <p>Track pool laps or open water swims across islands. Swim between nearby islands for bonus rewards.</p>
+      </div>
+      <div class="card animate__animated animate__fadeInUp animate-delay-4">
+        <div class="card-icon">🏋️</div>
+        <h3>Weightlifting</h3>
+        <p>Every rep powers your avatar forward. Convert pounds to miles and build strength to explore further.</p>
+      </div>
+    </div>
+    
+    <div class="progress-container animate__animated animate__fadeIn animate-delay-2">
+      <div class="progress-bar"></div>
+    </div>
+  </section>
+
+  <div class="wave-divider">
+    <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+      <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".25" fill="#e0f7fa"></path>
+      <path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" opacity=".5" fill="#e0f7fa"></path>
+      <path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z" fill="#e0f7fa"></path>
+    </svg>
+  </div>
+
+  <section class="section">
+    <h2 class="section-title animate__animated animate__fadeIn">Explore Nassau</h2>
+    <p class="section-subtitle animate__animated animate__fadeIn animate-delay-1">Begin your journey in the beautiful capital of the Bahamas</p>
+    
+    <div class="map-container" id="map">
+      <div class="map-overlay animate__animated animate__fadeIn animate-delay-2">
+        <h3>Your Current Location</h3>
+        <p>Start exploring Nassau today! Walk 5 miles to unlock Paradise Island.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-content">
+      <div class="footer-logo">Distance Islands</div>
+      <p>Turn fitness into adventure. Explore the Bahamas one workout at a time.</p>
+      
+      <div class="footer-links">
+        <a href="#" class="footer-link">About</a>
+        <a href="#" class="footer-link">Features</a>
+        <a href="#" class="footer-link">Pricing</a>
+        <a href="#" class="footer-link">Blog</a>
+        <a href="#" class="footer-link">Contact</a>
+      </div>
+      
+      <div class="social-icons">
+        <a href="#" class="social-icon">📱</a>
+        <a href="#" class="social-icon">📘</a>
+        <a href="#" class="social-icon">📸</a>
+        <a href="#" class="social-icon">🐦</a>
+      </div>
+      
+      <div class="copyright">
+        &copy; 2023 Distance Islands. All rights reserved.
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // Initialize map with more detailed view
+    const map = L.map('map').setView([25.0343, -77.3963], 13);
+    
+    // Use a more colorful map style
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    
+    // Add custom markers with icons
+    const startIcon = L.divIcon({
+      className: 'map-marker',
+      html: '🏁',
+      iconSize: [30, 30],
+      iconAnchor: [15, 30]
+    });
+    
+    const poiIcon = L.divIcon({
+      className: 'map-marker',
+      html: '🏝️',
+      iconSize: [30, 30],
+      iconAnchor: [15, 30]
+    });
+    
+    // Add markers with custom icons
+    L.marker([25.0343, -77.3963], {icon: startIcon}).addTo(map)
+      .bindPopup('<b>Start Your Journey Here!</b><br>Nassau, Bahamas')
+      .openPopup();
+    
+    // Add points of interest
+    L.marker([25.0784, -77.3381], {icon: poiIcon}).addTo(map)
+      .bindPopup('<b>Paradise Island</b><br>Unlock at 5 miles');
+      
+    L.marker([25.0500, -77.4667], {icon: poiIcon}).addTo(map)
+      .bindPopup('<b>Love Beach</b><br>Unlock at 10 miles');
+    
+    // Add a circle to show exploration radius
+    L.circle([25.0343, -77.3963], {
+      color: '#00796b',
+      fillColor: '#4db6ac',
+      fillOpacity: 0.2,
+      radius: 2000
+    }).addTo(map);
+    
+    // Animation for elements when they come into view
+    const animateOnScroll = () => {
+      const elements = document.querySelectorAll('.animate__animated');
+      
+      elements.forEach(element => {
+        const elementPosition = element.getBoundingClientRect().top;
+        const windowHeight = window.innerHeight;
+        
+        if (elementPosition < windowHeight - 100) {
+          const animation = element.getAttribute('class').split('animate__')[1];
+          element.classList.add(`animate__${animation}`);
+        }
+      });
+    };
+    
+    window.addEventListener('scroll', animateOnScroll);
+    window.addEventListener('load', animateOnScroll);
+  </script>
+</body>
+</html>
