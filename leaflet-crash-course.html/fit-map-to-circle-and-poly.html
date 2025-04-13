@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Leaflet FitBounds Example</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    #map {
+      height: 100vh;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map');
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Add circle
+    const circle = L.circle([25.0343, -77.3963], {
+      radius: 500,
+      color: 'red',
+      fillColor: '#f03',
+      fillOpacity: 0.4
+    }).addTo(map);
+
+    // Add polygon
+    const polygonPoints = [
+      [25.0361, -77.3995],
+      [25.0380, -77.3900],
+      [25.0300, -77.3880]
+    ];
+
+    const polygon = L.polygon(polygonPoints, {
+      color: 'blue',
+      fillColor: 'blue',
+      fillOpacity: 0.3
+    }).addTo(map);
+
+    // Combine all latLng points (not bounds!) to fit
+    const allPoints = [circle.getLatLng(), ...polygonPoints];
+    map.fitBounds(allPoints);
+  </script>
+</body>
+</html>
